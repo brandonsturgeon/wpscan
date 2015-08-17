@@ -15,6 +15,14 @@ class WpItem
           response = Browser.get(readme_url)
           @version = extract_version(response.body)
         end
+        # Get version from changelog as a backup
+        if @version.nil?
+          if has_changelog?
+            response = Browser.get(changelog_url)
+            @version = extract_version(response.body)
+            puts @version
+          end
+        end
       end
       @version
     end
@@ -29,9 +37,9 @@ class WpItem
     #
     # @return [ String ] detected version
     def extract_version(body)
-      version = body[/\b(?:stable tag|version):\s*(?!trunk)([0-9a-z\.-]+)/i, 1]
+      version = body[/\b(?:stable tag|(?:v|V)ersion):?\s*(?!trunk)([0-9a-z\.-]+)/i, 1]
       if version.nil? || version !~ /[0-9]+/
-        extracted_versions = body.scan(/[=]+\s+(?:v(?:ersion)?\s*)?([0-9\.-]+)[ \ta-z0-9\(\)\.-]*[=]+/i)
+        extracted_versions = body.scan(/[=]+\s+(?:v|V(?:ersion)?\s*)?([0-9\.-]+)[ \ta-z0-9\(\)\.-]*[=]+/i)
         return if extracted_versions.nil? || extracted_versions.length == 0
         extracted_versions.flatten!
         # must contain at least one number
@@ -48,6 +56,5 @@ class WpItem
         return version
       end
     end
-
   end
 end
